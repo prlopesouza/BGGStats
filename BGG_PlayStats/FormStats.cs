@@ -37,9 +37,14 @@ namespace BGG_PlayStats
 
         public FormStats(string id)
         {
+            //CARREGAR PARTIDAS DO BANCO
+
             gameId = id;
 
             InitializeComponent();
+
+            AllPlays = Program.data.selectPlays(gameId);
+            UpdateAll();
 
             for (int i=2; i<=10; i++)
             {
@@ -57,13 +62,75 @@ namespace BGG_PlayStats
             //cbMaxPlayers.ValueMember = "intPlayerCount";
         }
 
-        private void btnLoadPlays_Click(object sender, EventArgs e)
+        private void btnSyncPlays_Click(object sender, EventArgs e)
         {
             RestClient client = new RestClient("https://boardgamegeek.com");
 
             IRestRequest r = new RestRequest("/xmlapi2/plays", Method.GET);
             r.AddQueryParameter("id", gameId);
             r.AddQueryParameter("type", "thing");
+            //username
+            //mindate
+            //maxdate
+            //subtype
+            //page
+
+            int page = 1;
+            int total = -1;
+            pbLoadBar.Value = 0;
+
+            do
+            {
+                r.AddOrUpdateParameter("page", page.ToString(), ParameterType.QueryString);
+                IRestResponse response = client.Execute(r);
+
+                XDocument content = new XDocument();
+                content = XDocument.Parse(response.Content);
+
+                if (total < 0)
+                {
+                    total = int.Parse(content.Element("plays").Attribute("total").Value);
+                    pbLoadBar.Maximum = (int)Math.Ceiling((double)total / 100);
+                    pbLoadBar.Step = 1;
+                }
+                pbLoadBar.PerformStep();
+
+                foreach (XElement play in content.Element("plays").Elements())
+                {
+                    int playerCount = 0;
+                    if (play.Element("players") != null) playerCount = play.Element("players").Elements().Count();
+                    bool ok = Program.data.insertPlay(play.Attribute("id").Value, play.Attribute("userid").Value, play.Attribute("date").Value, play.Attribute("quantity").Value, play.Attribute("length").Value, play.Attribute("incomplete").Value, play.Attribute("nowinstats").Value, play.Attribute("location").Value, gameId, playerCount);
+                    if (ok && play.Element("players") != null)
+                    {
+                        foreach (XElement player in play.Element("players").Elements())
+                        {
+                            Program.data.insertPlayer(player.Attribute("userid").Value, player.Attribute("name").Value, player.Attribute("startposition").Value, player.Attribute("color").Value.ToUpper().Trim(), player.Attribute("score").Value, player.Attribute("new").Value, player.Attribute("rating").Value, player.Attribute("win").Value, play.Attribute("id").Value);
+                        }
+                    }
+                }
+
+                page++;
+                Thread.Sleep(2100);
+            } while ((page - 1) * 100 < total);
+
+            UpdateAll();
+        } 
+
+         /*
+        private void OLD_LOADPLAYS_FUNCTION()
+        {
+            //SINCRONIZAR NOVAS PARTIDAS
+
+            RestClient client = new RestClient("https://boardgamegeek.com");
+
+            IRestRequest r = new RestRequest("/xmlapi2/plays", Method.GET);
+            r.AddQueryParameter("id", gameId);
+            r.AddQueryParameter("type", "thing");
+            //username
+            //mindate
+            //maxdate
+            //subtype
+            //page
 
             int page = 1;
             int total = -1;
@@ -126,40 +193,6 @@ namespace BGG_PlayStats
                         int win = int.Parse(player.Attribute("win").Value);
 
                         objPlay.AddPlayer(color, win, score);
-
-                        /*FactionStats fs = new FactionStats();
-                        fs.name = color;
-                        if (AllStats.Keys.Contains(color))
-                        {
-                            fs.winRatio = (AllStats[color].winRatio * AllStats[color].playCount + win * objPlay.quantity) / (AllStats[color].playCount + objPlay.quantity);
-                            fs.playCount = AllStats[color].playCount + objPlay.quantity;
-                            if (score != 0)
-                            {
-                                fs.avgScore = (AllStats[color].avgScore * AllStats[color].scoreCount + score * objPlay.quantity) / (AllStats[color].scoreCount + objPlay.quantity);
-                                fs.scoreCount = AllStats[color].scoreCount + objPlay.quantity;
-                            }
-                            else
-                            {
-                                fs.avgScore = AllStats[color].avgScore;
-                                fs.scoreCount = AllStats[color].scoreCount;
-                            }
-                            AllStats[color] = fs;
-                        }
-                        else
-                        {
-                            fs.avgScore = score;
-                            if (score != 0)
-                            {
-                                fs.scoreCount = objPlay.quantity;
-                            }
-                            else
-                            {
-                                fs.scoreCount = 0;
-                            }
-                            fs.winRatio = win;
-                            fs.playCount = objPlay.quantity;
-                            AllStats.Add(color, fs);
-                        }*/
                     }
                     AllPlays.Add(objPlay);
                 }
@@ -169,7 +202,8 @@ namespace BGG_PlayStats
 
             UpdateAll();
         }
-
+        */
+        
         private void UpdateAll(List<string> includedColors = null, bool exclusiveColors = false, int minPlayers = 0, int maxPlayers = 999)
         {
             AllStats.Clear();
@@ -178,7 +212,7 @@ namespace BGG_PlayStats
                 if (play.playerCount < minPlayers || play.playerCount > maxPlayers) continue;
                 
                 List<string> colorNames = new List<string>();
-                foreach (Play.Player player in play.players)
+                foreach (Player player in play.players)
                 {
                     string color = player.color;
                     if (aggregated.ContainsKey(color)) color = aggregated[color];
@@ -198,7 +232,7 @@ namespace BGG_PlayStats
 
                 List<string> countedColor = new List<string>();
 
-                foreach (Play.Player player in play.players) {
+                foreach (Player player in play.players) {
                     string color = player.color;
                     if (excluded.Contains(color)) continue;
                     if (aggregated.ContainsKey(color)) color = aggregated[color];
@@ -253,7 +287,7 @@ namespace BGG_PlayStats
                 if (play.playerCount < minPlayers || play.playerCount > maxPlayers) continue;
 
                 List<string> colorNames = new List<string>();
-                foreach (Play.Player player in play.players)
+                foreach (Player player in play.players)
                 {
                     string color = player.color;
                     if (aggregated.ContainsKey(color)) color = aggregated[color];
@@ -272,7 +306,7 @@ namespace BGG_PlayStats
 
                 List<string> countedColor = new List<string>();
 
-                foreach (Play.Player player in play.players)
+                foreach (Player player in play.players)
                 {
                     string color = player.color;
                     if (aggregated.ContainsKey(color)) color = aggregated[color];

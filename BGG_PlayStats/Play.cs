@@ -8,12 +8,12 @@ namespace BGG_PlayStats
 {
     public class Play
     {
-        public struct Player
-        {
-            public string color;
-            public int win;
-            public float score;
-        }
+        public long id;
+        public long userId;
+        public bool incomplete;
+        public bool noWinStats;
+        public string location;
+        public long gameId;
 
         public List<Player> players;
 
@@ -31,17 +31,14 @@ namespace BGG_PlayStats
             playerCount = 0;
         }
 
-        public bool AddPlayer(string color, int win, float score)
+        public bool AddPlayer(string color, int win, float score = 0)
         {
-            this.players.Add(new Player { color = color, win = win, score = score });
-            playerCount++;
-            return true;
-        }
+            Player p = new Player();
+            p.color = color;
+            p.win = win;
+            p.score = score;
+            this.players.Add(p);
 
-        public bool AddPlayer(string color, int win)
-        {
-            this.players.Add(new Player { color = color, win = win});
-            playerCount++;
             return true;
         }
     }

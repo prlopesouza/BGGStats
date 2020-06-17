@@ -30,7 +30,7 @@
         {
             this.lbFactions = new System.Windows.Forms.ListBox();
             this.btnAggregate = new System.Windows.Forms.Button();
-            this.btnLoadPlays = new System.Windows.Forms.Button();
+            this.btnSyncPlays = new System.Windows.Forms.Button();
             this.cbMinPlayers = new System.Windows.Forms.ComboBox();
             this.cbMaxPlayers = new System.Windows.Forms.ComboBox();
             this.dgStats = new System.Windows.Forms.DataGridView();
@@ -65,15 +65,15 @@
             this.btnAggregate.UseVisualStyleBackColor = true;
             this.btnAggregate.Click += new System.EventHandler(this.btnAggregate_Click);
             // 
-            // btnLoadPlays
+            // btnSyncPlays
             // 
-            this.btnLoadPlays.Location = new System.Drawing.Point(481, 390);
-            this.btnLoadPlays.Name = "btnLoadPlays";
-            this.btnLoadPlays.Size = new System.Drawing.Size(75, 23);
-            this.btnLoadPlays.TabIndex = 2;
-            this.btnLoadPlays.Text = "Carregar";
-            this.btnLoadPlays.UseVisualStyleBackColor = true;
-            this.btnLoadPlays.Click += new System.EventHandler(this.btnLoadPlays_Click);
+            this.btnSyncPlays.Location = new System.Drawing.Point(481, 390);
+            this.btnSyncPlays.Name = "btnSyncPlays";
+            this.btnSyncPlays.Size = new System.Drawing.Size(75, 23);
+            this.btnSyncPlays.TabIndex = 2;
+            this.btnSyncPlays.Text = "Sync Plays";
+            this.btnSyncPlays.UseVisualStyleBackColor = true;
+            this.btnSyncPlays.Click += new System.EventHandler(this.btnSyncPlays_Click);
             // 
             // cbMinPlayers
             // 
@@ -191,7 +191,7 @@
             this.Controls.Add(this.dgStats);
             this.Controls.Add(this.cbMaxPlayers);
             this.Controls.Add(this.cbMinPlayers);
-            this.Controls.Add(this.btnLoadPlays);
+            this.Controls.Add(this.btnSyncPlays);
             this.Controls.Add(this.btnAggregate);
             this.Controls.Add(this.lbFactions);
             this.Name = "FormStats";
@@ -206,7 +206,7 @@
 
         private System.Windows.Forms.ListBox lbFactions;
         private System.Windows.Forms.Button btnAggregate;
-        private System.Windows.Forms.Button btnLoadPlays;
+        private System.Windows.Forms.Button btnSyncPlays;
         private System.Windows.Forms.ComboBox cbMinPlayers;
         private System.Windows.Forms.ComboBox cbMaxPlayers;
         private System.Windows.Forms.DataGridView dgStats;
