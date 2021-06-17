@@ -21,6 +21,9 @@ namespace BGG_PlayStats
         List<string> excluded = new List<string>();
         Dictionary<string, string> aggregated = new Dictionary<string, string>();
         List<Play> AllPlays = new List<Play>();
+        long totalPlayTime = 0;
+        long playTimeCount = 0;
+        int minPlayCount = 2;
 
         //BindingList<PlayerCount> playerCounts = new BindingList<PlayerCount>(); 
 
@@ -37,13 +40,15 @@ namespace BGG_PlayStats
 
         public FormStats(string id)
         {
-            //CARREGAR PARTIDAS DO BANCO
-
             gameId = id;
 
             InitializeComponent();
 
             AllPlays = Program.data.selectPlays(gameId);
+
+            aggregated = Program.data.selectAggregated(gameId);
+            excluded = Program.data.selectExcluded(gameId);
+
             UpdateAll();
 
             for (int i=2; i<=10; i++)
@@ -79,6 +84,8 @@ namespace BGG_PlayStats
             int total = -1;
             pbLoadBar.Value = 0;
 
+            txtDebug.AppendText("START SYNC: " + DateTime.Now);
+
             do
             {
                 r.AddOrUpdateParameter("page", page.ToString(), ParameterType.QueryString);
@@ -113,104 +120,31 @@ namespace BGG_PlayStats
                 Thread.Sleep(2100);
             } while ((page - 1) * 100 < total);
 
+            txtDebug.AppendText("END SYNC, START DB READ: " + DateTime.Now);
+
+            AllPlays = Program.data.selectPlays(gameId); //TEMPORÁRIO
+
+            txtDebug.AppendText("END DB READ: " + DateTime.Now);
+
             UpdateAll();
         } 
-
-         /*
-        private void OLD_LOADPLAYS_FUNCTION()
-        {
-            //SINCRONIZAR NOVAS PARTIDAS
-
-            RestClient client = new RestClient("https://boardgamegeek.com");
-
-            IRestRequest r = new RestRequest("/xmlapi2/plays", Method.GET);
-            r.AddQueryParameter("id", gameId);
-            r.AddQueryParameter("type", "thing");
-            //username
-            //mindate
-            //maxdate
-            //subtype
-            //page
-
-            int page = 1;
-            int total = -1;
-            AllPlays = new List<Play>();
-            pbLoadBar.Value = 0;
-            do
-            {
-                r.AddOrUpdateParameter("page", page.ToString(), ParameterType.QueryString);
-                IRestResponse response = client.Execute(r);
-
-                XDocument content = new XDocument();
-                content = XDocument.Parse(response.Content);
-
-                if (total < 0)
-                {
-                    total = int.Parse(content.Element("plays").Attribute("total").Value);
-                    pbLoadBar.Maximum = (int)Math.Ceiling((double)total / 100);
-                    pbLoadBar.Step = 1;
-                }
-                pbLoadBar.PerformStep();
-
-                foreach (XElement play in content.Element("plays").Elements())
-                {
-                    if (play.Element("players") == null) continue;
-                    if (play.Element("players").Elements().Count() < 1) continue;
-                    //if (play.Element("players").Elements().Count() < int.Parse(cbMinPlayers.SelectedValue.ToString())) continue;
-                    //if (play.Element("players").Elements().Count() > int.Parse(cbMaxPlayers.SelectedValue.ToString())) continue;
-                    if (play.Attribute("incomplete").Value == "1") continue;
-                    if (play.Attribute("nowinstats").Value == "1") continue;
-                    bool ok = true;
-                    foreach (XElement player in play.Element("players").Elements())
-                    {
-                        if (player.Attribute("color").Value == "")
-                        {
-                            ok = false;
-                            break;
-                        }
-                    }
-                    if (!ok) continue;
-
-                    Play objPlay = new Play();
-
-                    objPlay.quantity = int.Parse(play.Attribute("quantity").Value);
-                    foreach (XElement player in play.Element("players").Elements())
-                    {
-                        string color = player.Attribute("color").Value.ToUpper().Trim();
-
-                        //if (excluded.Contains(color)) continue;
-                        //if (aggregated.ContainsKey(color)) color = aggregated[color];
-
-                        float score = 0;
-                        if (player.Attribute("score").Value != "")
-                        {
-                            try
-                            {
-                                score = float.Parse(player.Attribute("score").Value);
-                            }
-                            catch (Exception) { }
-                        }
-                        int win = int.Parse(player.Attribute("win").Value);
-
-                        objPlay.AddPlayer(color, win, score);
-                    }
-                    AllPlays.Add(objPlay);
-                }
-                page++;
-                Thread.Sleep(2100);
-            } while ((page - 1) * 100 < total);
-
-            UpdateAll();
-        }
-        */
         
         private void UpdateAll(List<string> includedColors = null, bool exclusiveColors = false, int minPlayers = 0, int maxPlayers = 999)
         {
             AllStats.Clear();
+            totalPlayTime = 0;
+            playTimeCount = 0;
+
             foreach (Play play in AllPlays)
             {
                 if (play.playerCount < minPlayers || play.playerCount > maxPlayers) continue;
                 
+                if (play.length>10)
+                {
+                    totalPlayTime += play.length;
+                    playTimeCount++;
+                }
+
                 List<string> colorNames = new List<string>();
                 foreach (Player player in play.players)
                 {
@@ -275,16 +209,25 @@ namespace BGG_PlayStats
                     }
                 }
             }
+
             UpdateStatsShow();
             UpdateFactionsShow();
         }
 
         private void Filter(List<string> includedColors = null, bool exclusiveColors = false, int minPlayers = 0, int maxPlayers = 999)
         {
+            totalPlayTime = 0;
+            playTimeCount = 0;
             AllStats.Clear();
             foreach (Play play in AllPlays)
             {
                 if (play.playerCount < minPlayers || play.playerCount > maxPlayers) continue;
+
+                if (play.length > 10)
+                {
+                    totalPlayTime += play.length;
+                    playTimeCount++;
+                }
 
                 List<string> colorNames = new List<string>();
                 foreach (Player player in play.players)
@@ -350,16 +293,24 @@ namespace BGG_PlayStats
                     }
                 }
             }
+
             UpdateStatsShow();
         }
 
         private void UpdateStatsShow()
         {
+            int AvgPlayTime = 0;
+            if (playTimeCount > 0) AvgPlayTime = (int)(totalPlayTime / playTimeCount);
+            lbAvgPlayTime.Text = $"{AvgPlayTime} minutes (from {playTimeCount} plays).";
+
             AllStats.OrderBy(k => k.Value.playCount);
             dgStats.Rows.Clear();
             foreach (string faction in AllStats.Keys.OrderBy(k => AllStats[k].playCount))
             {
-                dgStats.Rows.Add(faction, AllStats[faction].winRatio, AllStats[faction].avgScore, AllStats[faction].playCount, AllStats[faction].scoreCount);
+                if (AllStats[faction].playCount > minPlayCount)
+                {
+                    dgStats.Rows.Add(faction, AllStats[faction].winRatio, AllStats[faction].avgScore, AllStats[faction].playCount, AllStats[faction].scoreCount);
+                }
             }
         }
 
@@ -368,7 +319,10 @@ namespace BGG_PlayStats
             lbFactions.Items.Clear();
             foreach (string faction in AllFactions)
             {
-                lbFactions.Items.Add(faction);
+                if (AllStats[faction].playCount > minPlayCount)
+                {
+                    lbFactions.Items.Add(faction);
+                }
             }
         }
 
@@ -385,6 +339,7 @@ namespace BGG_PlayStats
                 AllStats.Remove(faction);
                 AllFactions.Remove(faction);
                 excluded.Add(faction);
+                Program.data.insertUpdateColor(gameId, faction, "", 1);
             }
 
             UpdateStatsShow();
@@ -430,6 +385,8 @@ namespace BGG_PlayStats
                 AllStats.Remove(faction);
                 AllFactions.Remove(faction);
                 if (!aggregated.ContainsKey(faction)) aggregated.Add(faction, newName);
+
+                Program.data.insertUpdateColor(gameId, faction, newName, 0);
             }
 
             AllStats.Add(newName, fs);
@@ -443,7 +400,7 @@ namespace BGG_PlayStats
         {
             List<string> include = new List<string>();
             include = lbFactions.SelectedItems.Cast<string>().ToList();
-            Filter(include, cbApenasSelecionados.Checked);
+            Filter(include, cbApenasSelecionados.Checked, int.Parse((String)cbMinPlayers.SelectedItem), int.Parse((String)cbMaxPlayers.SelectedItem));
         }
     }
 }

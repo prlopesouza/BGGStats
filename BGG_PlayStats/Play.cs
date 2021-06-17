@@ -23,6 +23,9 @@ namespace BGG_PlayStats
 
         public int playerCount;
 
+        public int length;
+
+
         public Play()
         {
             players = new List<Player>();

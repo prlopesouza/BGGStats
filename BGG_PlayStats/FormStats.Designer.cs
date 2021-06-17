@@ -43,6 +43,9 @@
             this.cbApenasSelecionados = new System.Windows.Forms.CheckBox();
             this.btnFiltrar = new System.Windows.Forms.Button();
             this.pbLoadBar = new System.Windows.Forms.ProgressBar();
+            this.txtDebug = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.lbAvgPlayTime = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgStats)).BeginInit();
             this.SuspendLayout();
             // 
@@ -78,7 +81,18 @@
             // cbMinPlayers
             // 
             this.cbMinPlayers.FormattingEnabled = true;
-            this.cbMinPlayers.Location = new System.Drawing.Point(370, 392);
+            this.cbMinPlayers.Items.AddRange(new object[] {
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10"});
+            this.cbMinPlayers.Location = new System.Drawing.Point(617, 392);
             this.cbMinPlayers.Name = "cbMinPlayers";
             this.cbMinPlayers.Size = new System.Drawing.Size(73, 21);
             this.cbMinPlayers.TabIndex = 3;
@@ -86,7 +100,18 @@
             // cbMaxPlayers
             // 
             this.cbMaxPlayers.FormattingEnabled = true;
-            this.cbMaxPlayers.Location = new System.Drawing.Point(280, 392);
+            this.cbMaxPlayers.Items.AddRange(new object[] {
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10"});
+            this.cbMaxPlayers.Location = new System.Drawing.Point(704, 392);
             this.cbMaxPlayers.Name = "cbMaxPlayers";
             this.cbMaxPlayers.Size = new System.Drawing.Size(73, 21);
             this.cbMaxPlayers.TabIndex = 4;
@@ -179,11 +204,40 @@
             this.pbLoadBar.Step = 1;
             this.pbLoadBar.TabIndex = 9;
             // 
+            // txtDebug
+            // 
+            this.txtDebug.Location = new System.Drawing.Point(563, 242);
+            this.txtDebug.Multiline = true;
+            this.txtDebug.Name = "txtDebug";
+            this.txtDebug.Size = new System.Drawing.Size(215, 142);
+            this.txtDebug.TabIndex = 10;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(13, 457);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(99, 13);
+            this.label1.TabIndex = 11;
+            this.label1.Text = "Average Play Time:";
+            // 
+            // lbAvgPlayTime
+            // 
+            this.lbAvgPlayTime.AutoSize = true;
+            this.lbAvgPlayTime.Location = new System.Drawing.Point(118, 457);
+            this.lbAvgPlayTime.Name = "lbAvgPlayTime";
+            this.lbAvgPlayTime.Size = new System.Drawing.Size(16, 13);
+            this.lbAvgPlayTime.TabIndex = 12;
+            this.lbAvgPlayTime.Text = "---";
+            // 
             // FormStats
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(791, 450);
+            this.ClientSize = new System.Drawing.Size(791, 482);
+            this.Controls.Add(this.lbAvgPlayTime);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.txtDebug);
             this.Controls.Add(this.pbLoadBar);
             this.Controls.Add(this.btnFiltrar);
             this.Controls.Add(this.cbApenasSelecionados);
@@ -219,5 +273,8 @@
         private System.Windows.Forms.CheckBox cbApenasSelecionados;
         private System.Windows.Forms.Button btnFiltrar;
         private System.Windows.Forms.ProgressBar pbLoadBar;
+        private System.Windows.Forms.TextBox txtDebug;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lbAvgPlayTime;
     }
 }
